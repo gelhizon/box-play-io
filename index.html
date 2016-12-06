@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+  <canvas id="myCanvas" width="500" height="300" style="border:1px solid #000000;">
+    Your browser does not support the HTML5 canvas tag.
+  </canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.6.0/socket.io.min.js"></script>
+  <script>
+    
+    var boxplay = new function() {
+      this.socket= io();
+      this.c = document.getElementById("myCanvas");
+      this.ctx = this.c.getContext("2d");
+      this.box = {};
+      this.boxes = [];
+      this.leftButton = false;
+      this.upButton = false;
+      this.rightButton = false;
+      this.downButton = false;
+
+      this.init =  function() {
+        this.box.name = prompt("Please enter your name", "Harry Potter");
+        this.box.color = prompt("Enter Box Color", "red");
+        this.box.x = 0;
+        this.box.y = 0; 
+
+        this.socket.emit('setbox', this.box);
+        this.socket.on('getboxes', function(message){
+          this.boxes = message;
+        }.bind(this));
+        addEventListener("keyup", this.doKeyUp, true);
+        addEventListener( "keydown", this.doKeyDown, true);
+
+        requestAnimationFrame(this.draw);
+      }.bind(this);
+
+      this.draw = function() {
+        // compute
+        if (this.leftButton) {
+          this.box.x -= 5;
+        } else if (this.rightButton) {
+          this.box.x += 5;
+        } 
+        if (this.upButton) {
+          this.box.y -= 5;
+        }
+        if (this.downButton) {
+          this.box.y += 5;
+        }
+        
+        this.socket.emit('updatebox', this.box);
+
+        this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+
+        // draw all boxes 
+        this.boxes.forEach(function(item) {
+          this.ctx.fillStyle=item.color;
+          this.ctx.fillRect(item.x,item.y,20,20);
+          this.ctx.fillText(item.name,item.x,item.y);
+        }.bind(this));
+
+        requestAnimationFrame(this.draw); 
+      }.bind(this);
+
+      // Listeners
+      this.doKeyDown = function (e) {
+        if (e.keyCode == 37) { 
+          this.leftButton = true;
+        }
+        if (e.keyCode == 38) { 
+          this.upButton = true;
+        }
+        if (e.keyCode == 39) { 
+          this.rightButton = true;
+        }
+        if (e.keyCode == 40) { 
+          this.downButton = true;
+        }
+      }.bind(this);
+
+      this.doKeyUp = function (e) {
+        if (e.keyCode == 37) { 
+          this.leftButton = false;
+        }
+        if (e.keyCode == 38) { 
+          this.upButton = false;
+        }
+        if (e.keyCode == 39) { 
+          this.rightButton = false;
+        }
+        if (e.keyCode == 40) { 
+          this.downButton = false;
+        }
+      }.bind(this);
+    }
+
+  boxplay.init();
+
+</script>
+</body>
+</html>
